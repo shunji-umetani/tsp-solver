@@ -1,4 +1,15 @@
 # tsp-solver
 metaheuristics for traveling salesman problem (TSP)
-- Local Search (tsp_ls_naive.py)
-- Local Search with Neighbor-List (tsp_ls_nblist.py)
+- Local Search (LS)
+- Local Search with Neighbor-List (LS-NL)
+- Random Multi-start Local Search (MLS)
+- Iterated Local Search (ILS)
+- Iterated Local Search with Fast Local Search (ILS-FLS)
+- improved ILS-FLS
+- Guided Local Search (GLS)
+- Guided Local Search with FLS (GLS-FLS)
+- Greedy Randomized Adaptive Search Procedure (GRASP)
+- Simulated Annealing (SA)
+- Tabu Search with Rule1 (TS1)
+- Tabu Search with Rule2 (TS2)
+- Memetic Alsogithm with FLS (MA-FLS)
