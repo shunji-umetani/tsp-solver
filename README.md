@@ -5,7 +5,7 @@ metaheuristics for traveling salesman problem (TSP)
 - Random Multi-start Local Search (MLS)
 - Iterated Local Search (ILS)
 - Iterated Local Search with Fast Local Search (ILS-FLS)
-- improved ILS-FLS
+- improved ILS-FLS (ILS+)
 - Guided Local Search (GLS)
 - Guided Local Search with FLS (GLS-FLS)
 - Greedy Randomized Adaptive Search Procedure (GRASP)
