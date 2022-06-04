@@ -27,7 +27,7 @@ $ tsp_ils.py [-h] [-t TIME] [-d] filename
 ```
 - `filename` TSP instance (mandatory)
 - `-t` timelimit (optional, default 60 sec)
-- `-d` visually display obtained tour
+- `-d` visually display obtained tour (optional)
 
 ## Author
 [Umetani, Shunji](https://github.com/shunji-umetani)
