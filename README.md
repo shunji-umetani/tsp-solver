@@ -19,7 +19,7 @@ metaheuristics for traveling salesman problem (TSP)
 - Simple implementation of metaheuristics in Python.
 - Local search with 2-opt, Or-opt, and 3-opt neighborhood search.
 - Efficient LS implementation using neighbor-list.
-- Use Euclidean TSP instances (EUC2D) from [TSPLIB](http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/).
+- For Euclidean TSP instances (EUC2D) in [TSPLIB](http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/).
 
 ## Usage
 ```
