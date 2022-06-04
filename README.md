@@ -14,3 +14,23 @@ metaheuristics for traveling salesman problem (TSP)
 - `tsp_tabu_rule2.py` [Tabu Search with Rule2 (TS2)](https://github.com/shunji-umetani/tsp-solver/blob/main/tsp_tabu_rule2.py)
 - `tsp_ma.py` [Memetic Alsogithm (MA)](https://github.com/shunji-umetani/tsp-solver/blob/main/tsp_ma.py)
 - `tsp_ma_fls.py` [Memetic Alsogithm with FLS (MA-FLS)](https://github.com/shunji-umetani/tsp-solver/blob/main/tsp_ma_fls.py)
+
+## Feature
+- Simple implementation of metaheuristics in Python.
+- Local search with 2-opt, Or-opt, and 3-opt neighborhood search.
+- Efficient LS implementation using neighbor-list.
+- **NOTICE:** Work only for Euclidean TSP instances (EUC2D) of [TSPLIB](http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/).
+
+## Usage
+```
+$ tsp_ils.py [-h] [-t TIME] [-d] filename
+```
+- `filename` TSP instance (mandatory)
+- `-t` timelimit (optional, default 60 sec)
+- `-d` visually display obtained tour
+
+## Author
+[Umetani, Shunji](https://github.com/shunji-umetani)
+
+## License
+This software is released under the MIT License, see LICENSE.
