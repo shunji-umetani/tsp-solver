@@ -22,6 +22,7 @@ metaheuristics for traveling salesman problem (TSP)
 - For Euclidean TSP instances (EUC2D) in [TSPLIB](http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/).
 
 ## Usage
+common usage for all codes
 ```
 $ tsp_ils.py [-h] [-t TIME] [-d] filename
 ```
