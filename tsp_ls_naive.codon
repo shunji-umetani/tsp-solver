@@ -1,0 +1,357 @@
+#!/opt/homebrew/bin/python3
+# -*- coding: utf-8 -*-
+
+# --------------------------------------------------------------------
+#   Local search for TSP
+#
+#   Author: Shunji Umetani <umetani@ist.osaka-u.ac.jp>
+#   Date: 2023/3/22
+# --------------------------------------------------------------------
+
+# import modules -----------------------------------------------------
+import sys
+import time
+import math
+import random
+from typing import List
+from typing import Tuple
+
+# constant -----------------------------------------------------------
+OR_OPT_SIZE = 3  # maximum size of subpath (or_opt_search)
+
+# --------------------------------------------------------------------
+#   TSP data
+# --------------------------------------------------------------------
+class Tsp:
+    name: str
+    num_node: int
+    coord: List[Tuple[float, float]]
+
+    # constructor ----------------------------------------------------
+    def __init__(self):
+        self.name = ''  # name of TSP instance
+        self.num_node = 0  # number of nodes
+        self.coord = []  # coordinate list of nodes
+
+    # read TSP data --------------------------------------------------
+    def read(self, args):
+        # open file
+        if len(args) != 2:
+            print('Invalid arguments!')
+            sys.exit(1)
+        input_file = open(args[1], 'r')
+        raw_data: List[str] = input_file.readlines()
+        input_file.close()
+
+        # read data
+        data: List[List[str]] = [[] for _ in range(len(raw_data))]
+        start_coord: int = -1
+        for i in range(len(raw_data)):
+            data[i] = (raw_data[i].rstrip()).split()
+            data[i] = list(filter(lambda str:str != ':', data[i]))  # remove colon
+            if len(data[i]) > 0:
+                data[i][0] = data[i][0].rstrip(':')  # remove colon
+                match data[i][0]:
+                    case 'NAME':
+                        self.name = data[i][1]
+                    case 'TYPE':
+                        if data[i][1] != 'TSP':
+                            print('Problem type is not TSP!')
+                            sys.exit(1)
+                    case 'DIMENSION':
+                        self.num_node = int(data[i][1])
+                    case 'EDGE_WEIGHT_TYPE':  # accept only EUC_2D
+                        if data[i][1] != 'EUC_2D':
+                            print('Edge weight type is not EUC_2D!')
+                            sys.exit(1)
+                    case 'NODE_COORD_SECTION':
+                        start_coord = i
+
+        # coord section
+        self.coord = [(0.0, 0.0)] * self.num_node
+        i = start_coord+1
+        for k in range(self.num_node):
+            self.coord[k] = (float(data[i][1]), float(data[i][2]))
+            i += 1
+
+    # write TSP data -------------------------------------------------
+    def write(self):
+        print('\n[TSP data]')
+        print('name:\t', self.name)
+        print('#node:\t', self.num_node)
+        print('coord:\t', self.coord)
+
+    # calculate distance (rounded Euclidean distance in 2D) ----------
+    def dist(self, v1: int, v2: int) -> int:
+        xd = self.coord[v1][0] - self.coord[v2][0]
+        yd = self.coord[v1][1] - self.coord[v2][1]
+        return int(math.sqrt(xd * xd + yd * yd)+0.5)
+
+# --------------------------------------------------------------------
+#   working data
+# --------------------------------------------------------------------
+class Work:
+    tour: List[int]  # tour of salesman
+    obj: int  # objective value
+
+    # constructor ----------------------------------------------------
+    def __init__(self, tsp):
+        self.tour = [i for i in range(tsp.num_node)]
+        self.obj = 0
+
+    # calculate tour length ------------------------------------------
+    def tour_len(self, tsp) -> int:
+        length: int = 0
+        for i in range(len(self.tour)):
+            length += tsp.dist(self.tour[i], self.tour[(i+1) % len(self.tour)])
+        return length
+
+    # write working data ---------------------------------------------
+    def write(self, tsp):
+        print('\n[Tour data]')
+        print('length:\t', self.tour_len(tsp))
+
+# function -----------------------------------------------------------
+
+# --------------------------------------------------------------------
+#   nearest neighbor algorithm
+#   tsp[in] TSP data
+#   work[in,out] working data
+# --------------------------------------------------------------------
+def nearest_neighbor(tsp, work):
+    print('\n[nearest neighbor]')
+
+    # nearest neighbor
+    for i in range(1,tsp.num_node):
+        # find nearest unvisited node
+        min_dist: int = sys.maxsize
+        arg_min_dist: int = -1
+        for j in range(i, tsp.num_node):
+            dist: int = tsp.dist(work.tour[i-1], work.tour[j])
+            if dist < min_dist:
+                min_dist = dist
+                arg_min_dist = j
+        # set nearest unvisited node
+        work.tour[i], work.tour[arg_min_dist] = work.tour[arg_min_dist], work.tour[i]
+
+    # calculate tour length
+    work.obj = work.tour_len(tsp)
+    print('length:\t', work.obj)
+
+# --------------------------------------------------------------------
+#   2-opt search
+#   tsp[in] TSP data
+#   work[in,out] working data
+#   -> [True] improved
+# --------------------------------------------------------------------
+def two_opt_search(tsp, work) -> bool:
+    # incremental evaluation
+    def inc_eval(tsp, work, i: int, j: int) -> int:
+        u, next_u = work.tour[i], work.tour[(i+1) % len(work.tour)]
+        v, next_v = work.tour[j], work.tour[(j+1) % len(work.tour)]
+        cur = tsp.dist(u, next_u) + tsp.dist(v, next_v)
+        new = tsp.dist(u, v) + tsp.dist(next_u, next_v)
+        return new - cur
+
+    # change tour
+    def change_tour(tsp, work, i: int, j: int):
+        # reverse subpath [i+1,...,j]
+        work.tour[i+1:j+1] = work.tour[j:i:-1]
+        # update tour length
+        work.obj = work.tour_len(tsp)
+
+    # 2-opt search (main)
+    improved: bool = False
+    restart: bool = True
+    while restart:
+        restart = False
+        nbhd = ((i,j)
+                for i in range(len(work.tour))
+                for j in range(i+2, len(work.tour)))
+        for i,j in nbhd:
+            delta = inc_eval(tsp, work, i, j)
+            if delta < 0:
+                change_tour(tsp, work, i, j)
+                improved = True
+                restart = True
+                break
+
+    return improved
+
+# --------------------------------------------------------------------
+#   Or-opt search
+#   tsp[in] TSP data
+#   work[in,out] working data
+#   size[in] length of subpath
+#   -> [True] improved
+# --------------------------------------------------------------------
+def or_opt_search(tsp, work, size: int = OR_OPT_SIZE) -> bool:
+    # incremental evaluation
+    def inc_eval(tsp, work, s: int, i: int, j: int) -> Tuple[int, str]:
+        head_p, tail_p = work.tour[i], work.tour[(i+s-1) % len(work.tour)]
+        prev_p, next_p = work.tour[(i-1) % len(work.tour)], work.tour[(i+s) % len(work.tour)]
+        v, next_v = work.tour[j % len(work.tour)], work.tour[(j+1) % len(work.tour)]
+        cur = tsp.dist(prev_p, head_p) + tsp.dist(tail_p, next_p) + tsp.dist(v, next_v)
+        new_fwd = tsp.dist(prev_p, next_p) + tsp.dist(v, head_p) + tsp.dist(tail_p, next_v)
+        new_bak = tsp.dist(prev_p, next_p) + tsp.dist(v, tail_p) + tsp.dist(head_p, next_v)
+        if new_fwd <= new_bak:
+            return (new_fwd - cur, 'fwd')
+        else:
+            return (new_bak - cur, 'bak')
+
+    # change tour
+    def change_tour(tsp, work, s: int, i: int, j: int, oper: str):
+        # get subpath [i,...,i+s-1]
+        subpath: List[int] = []
+        for h in range(s):
+            subpath.append(work.tour[(i+h) % len(work.tour)])
+        if oper == 'bak':
+            subpath.reverse()
+        # move subpath [i,...,i+s-1] to j+1
+        for h in range(i+s,j+1):
+            work.tour[(h-s) % len(work.tour)] = work.tour[h % len(work.tour)]
+        for h in range(s):
+            work.tour[(j+1-s+h) % len(work.tour)] = subpath[h]
+        # update tour length
+        work.obj = work.tour_len(tsp)
+
+    # Or-opt search (main)
+    improved: bool = False
+    restart: bool = True
+    while restart:
+        restart = False
+        nbhd = ((s,i,j)
+                for s in range(1,size+1)
+                for i in range(len(work.tour))
+                for j in range(i+s,i+len(work.tour)-1))
+        for s,i,j in nbhd:
+            delta, oper = inc_eval(tsp, work, s, i, j)
+            if delta < 0:
+                change_tour(tsp, work, s, i, j, oper)
+                improved = True
+                restart = True
+                break
+
+    return improved
+
+# --------------------------------------------------------------------
+#   3-opt search
+#   tsp[in] TSP data
+#   work[in,out] working data
+#   -> [True] improved
+# --------------------------------------------------------------------
+def three_opt_search(tsp, work) -> bool:
+    # incremental evaluation
+    def inc_eval(tsp, work, i: int, j: int, k: int) -> Tuple[int, str]:
+        best: int = sys.maxsize
+        arg_best: str = ''
+        u, next_u = work.tour[i], work.tour[(i+1) % len(work.tour)]
+        v, next_v = work.tour[j], work.tour[(j+1) % len(work.tour)]
+        w, next_w = work.tour[k], work.tour[(k+1) % len(work.tour)]
+        cur = tsp.dist(u, next_u) + tsp.dist(v, next_v) + tsp.dist(w, next_w)
+        # type1
+        new = tsp.dist(u, next_v) + tsp.dist(v, next_w) + tsp.dist(w, next_u)
+        if new - cur < best:
+            best, arg_best = new - cur, 'type1'
+        # type2
+        new = tsp.dist(u, w) + tsp.dist(next_v, next_u) + tsp.dist(v, next_w)
+        if new - cur < best:
+            best, arg_best = new - cur, 'type2'
+        # type3
+        new = tsp.dist(u, next_v) + tsp.dist(w, v) + tsp.dist(next_u, next_w)
+        if new - cur < best:
+            best, arg_best = new - cur, 'type3'
+        # type4
+        new = tsp.dist(v, u) + tsp.dist(next_w, next_v) + tsp.dist(w, next_u)
+        if new - cur < best:
+            best, arg_best = new - cur, 'type4'
+        return (best, arg_best)
+
+    # change tour
+    def change_tour(tsp, work, i: int, j: int, k:int, oper :str):
+        match oper:
+            case 'type1':
+                work.tour[i+1:k+1] = work.tour[j+1:k+1] + work.tour[i+1:j+1]
+            case 'type2':
+                work.tour[i+1:k+1] = work.tour[k:j:-1] + work.tour[i+1:j+1]
+            case 'type3':
+                work.tour[i+1:k+1] = work.tour[j+1:k+1] + work.tour[j:i:-1]
+            case 'type4':
+                work.tour[i+1:k+1] = work.tour[j:i:-1] + work.tour[k:j:-1]
+        # update tour length
+        work.obj = work.tour_len(tsp)
+
+    # 3-opt search (main)
+    improved = False
+    restart = True
+    while restart:
+        restart = False
+        nbhd = ((i,j,k)
+                for i in range(len(work.tour))
+                for j in range(i+2,len(work.tour))
+                for k in range(j+2,len(work.tour)))
+        for i,j,k in nbhd:
+            delta, oper = inc_eval(tsp, work, i, j, k)
+            if delta < 0:
+                change_tour(tsp, work, i, j, k, oper)
+                improved = True
+                restart = True
+                break
+
+    return improved
+
+# --------------------------------------------------------------------
+#   local search algorithm
+#   tsp[in] TSP data
+#   work[in,out] working data
+# --------------------------------------------------------------------
+def local_search(tsp, work):
+    print('\n[local search]')
+
+    # local search
+    while True:
+        # 2-opt search
+        two_opt_search(tsp, work)
+        # Or-opt search
+        if or_opt_search(tsp, work):
+            continue
+        # 3-opt search
+        if three_opt_search(tsp, work):
+            continue
+        break
+
+    # calculate tour length
+    work.obj = work.tour_len(tsp)
+    print('length:\t', work.obj)
+
+# --------------------------------------------------------------------
+#   main
+# --------------------------------------------------------------------
+def main(args=sys.argv):
+    # set starting time
+    start_time = time.time()
+
+    # read instance
+    tsp = Tsp()
+    tsp.read(args)
+    tsp.write()
+
+    # solve TSP
+    work = Work(tsp)
+    nearest_neighbor(tsp, work)
+    local_search(tsp, work)
+    work.write(tsp)
+
+    # set completion time
+    end_time = time.time()
+
+    # display computation time
+    print('\nTotal time:\t',round(end_time - start_time, 3), 'sec')
+
+# main ---------------------------------------------------------------
+if __name__ == "__main__":
+    main()
+
+# --------------------------------------------------------------------
+#   end of file
+# --------------------------------------------------------------------
