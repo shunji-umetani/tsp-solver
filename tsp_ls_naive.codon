@@ -77,9 +77,9 @@ class Tsp:
     # write TSP data -------------------------------------------------
     def write(self):
         print('\n[TSP data]')
-        print('name:\t', self.name)
-        print('#node:\t', self.num_node)
-        print('coord:\t', self.coord)
+        print(f'name:\t{self.name}')
+        print(f'#node:\t{self.num_node}')
+        print(f'coord:\t{self.coord}')
 
     # calculate distance (rounded Euclidean distance in 2D) ----------
     def dist(self, v1: int, v2: int) -> int:
@@ -109,7 +109,7 @@ class Work:
     # write working data ---------------------------------------------
     def write(self, tsp):
         print('\n[Tour data]')
-        print('length:\t', self.tour_len(tsp))
+        print(f'length:\t{self.tour_len(tsp)}')
 
 # function -----------------------------------------------------------
 
@@ -136,7 +136,7 @@ def nearest_neighbor(tsp, work):
 
     # calculate tour length
     work.obj = work.tour_len(tsp)
-    print('length:\t', work.obj)
+    print(f'length:\t{work.obj}')
 
 # --------------------------------------------------------------------
 #   2-opt search
@@ -322,7 +322,7 @@ def local_search(tsp, work):
 
     # calculate tour length
     work.obj = work.tour_len(tsp)
-    print('length:\t', work.obj)
+    print(f'length:\t{work.obj}')
 
 # --------------------------------------------------------------------
 #   main
@@ -346,7 +346,7 @@ def main(args=sys.argv):
     end_time = time.time()
 
     # display computation time
-    print('\nTotal time:\t',round(end_time - start_time, 3), 'sec')
+    print(f'\nTotal time:\t{end_time - start_time:.3f} sec')
 
 # main ---------------------------------------------------------------
 if __name__ == "__main__":
