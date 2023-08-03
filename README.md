@@ -32,6 +32,9 @@ $ tsp_ils.py [-h] [-t TIME] [-d] filename
 - `-d` visually display obtained tour (optional)
 - `-t` timelimit (optional, default 60 sec) except for `tsp_ls_naive.py` and `tsp_ls_nblist.py` 
 
+## References
+[slide (Japanese)](https://speakerdeck.com/umepon/introduction-to-design-and-implementation-of-metaheuristics)
+
 ## Author
 [Umetani, Shunji](https://github.com/shunji-umetani)
 
